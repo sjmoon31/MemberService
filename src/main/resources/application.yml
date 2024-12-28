@@ -1,0 +1,45 @@
+server:
+  port: 8090 # Random
+
+spring:
+  cloud:
+    compatibility-verifier:
+      enabled: false
+  application:
+    name: MemberProject
+  datasource:
+    driverClassName: org.mariadb.jdbc.Driver
+    url: jdbc:mariadb://localhost:3306/shop_db?characterEncoding=UTF-8&serverTimezone=UTC
+    username: root
+    password: 1234
+  profiles:
+    include: oauth  # 활성화할 프로파일을 oauth로 지정
+  jwt:
+    accessSecretKey: aG91Mjctc2ltcGxlLXNwcmluZy1ib290LWFwaS1qd3QK # JWT 서명에 사용할 비밀 키 (노출되지 않게 관리)
+    accessTokenExpireTime: 3600000 # 1시간 (밀리초)
+
+eureka:
+  client:
+    register-with-eureka: true
+    fetch-registry: true
+    service-url:
+      defaultZone: http://localhost:8761/eureka
+
+logging:
+  level:
+    com.shop: DEBUG
+
+greeting:
+  message: Welcome to the Simple E-Commerce.
+
+root:
+  path: C:/MSP/MemberProject/src/main/resources/static/
+  filePath: C:/MSP/FILES/
+# 이미지 업로드 경로 설정
+image:
+  product:
+    path: IMAGES/PRODUCT
+  review:
+    path: IMAGES/REVIEW
+  profile:
+    path: IMAGES/PROFILE
