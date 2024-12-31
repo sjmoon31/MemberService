@@ -2,9 +2,11 @@ package com.shop.contorller;
 
 import com.shop.security.JwtTokenProvider;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.server.ResponseStatusException;
 
 @RestController
 @RequiredArgsConstructor
@@ -23,6 +25,9 @@ public class AuthController {
             token =  token.substring(7);
             if (jwtTokenProvider.validateToken(token)){ // access 토큰 인증
                 email = jwtTokenProvider.getSubjectFromToken(token);
+            }
+            if (email == null) {
+                throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Unauthorized");
             }
         }
         return email;

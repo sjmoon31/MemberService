@@ -21,7 +21,6 @@ import java.util.Map;
  * 로그인 관련 Controller
  */
 @RestController
-@CrossOrigin(origins = "http://localhost:3000")
 @RequiredArgsConstructor
 public class LoginController {
     private final MemberService memberService;
@@ -29,32 +28,26 @@ public class LoginController {
     private final AuthenticationManager authenticationManager; // AuthenticationManager 주입
 
     /**
-     * ID 중복체크
-     * @param memberDTO
-     */
-    @PostMapping("/idDupChk")
-    public ResponseEntity<Map<String, String>> idDupChk(MemberDTO memberDTO) {
-        Map<String, String> resultMap = new HashMap<>();
-        MemberDTO member = memberService.selectMemberById(memberDTO.getMemberId());
-        String dupYn = "N";
-        if (member != null) {
-            dupYn = "Y";
-        }
-        resultMap.put("dupYn", dupYn);
-
-        // ResponseEntity로 JSON 응답을 보내기
-        return ResponseEntity.ok(resultMap);
-    }
-    /**
-     * 회원가입
-     * @param memberDTO
+     * 로그인 처리
      * @return
      */
-    @PostMapping("/signUp")
-    public ResponseEntity<Void> signUp(MemberDTO memberDTO) {
-        //WebSecurityConfigmemberDTO.setPassword(passwordEncoder.encode(memberDTO.getPassword()));
-        memberService.signUpMember(memberDTO);
-        return ResponseEntity.ok().build();
+    @PostMapping("/login")
+    public ResponseEntity<Map<String, Object>> login(@RequestBody Map<String, String> loginData) {
+        String email = loginData.get("email");
+        String password = loginData.get("password");
+
+        Authentication authentication = authenticationManager.authenticate(
+                new UsernamePasswordAuthenticationToken(email, password)
+        );
+
+        MemberDTO memberDTO = memberService.selectMemberByEmail(email);
+
+        String jwtToken = jwtTokenProvider.createToken(authentication.getName());
+        TokenDTO tokenDTO = new TokenDTO(jwtToken, email, memberDTO.getName());
+
+        Map<String, Object> result = new HashMap<>();
+        result.put("jwtToken", tokenDTO);
+        return ResponseEntity.ok(result);
     }
 
     /**
@@ -92,25 +85,26 @@ public class LoginController {
     }
 
     /**
-     * 로그인 처리
+     * ID 중복체크
+     * @param request
+     */
+    @PostMapping("/emailDupChk")
+    public ResponseEntity<Map<String, Boolean>> idDupChk(@RequestBody Map<String, String> request) {
+        Map<String, Boolean> resultMap = new HashMap<>();
+        MemberDTO member = memberService.selectMemberByEmail(request.get("email"));
+        boolean isUnique = (member == null);
+        resultMap.put("isUnique", isUnique);
+        return ResponseEntity.ok(resultMap);
+    }
+    /**
+     * 회원가입
+     * @param memberDTO
      * @return
      */
-    @PostMapping("/login")
-    public ResponseEntity<Map<String, Object>> login(@RequestBody Map<String, String> loginData) {
-        String email = loginData.get("email");
-        String password = loginData.get("password");
-
-        Authentication authentication = authenticationManager.authenticate(
-                new UsernamePasswordAuthenticationToken(email, password)
-        );
-
-        MemberDTO memberDTO = memberService.selectMemberByEmail(email);
-
-        String jwtToken = jwtTokenProvider.createToken(authentication.getName());
-        TokenDTO tokenDTO = new TokenDTO(jwtToken, email, memberDTO.getName());
-
-        Map<String, Object> result = new HashMap<>();
-        result.put("jwtToken", tokenDTO);
-        return ResponseEntity.ok(result);
+    @PostMapping("/join")
+    public ResponseEntity<Void> signUp(@RequestBody MemberDTO memberDTO) {
+        memberDTO.setMemberId(memberDTO.getEmail());
+        memberService.signUpMember(memberDTO);
+        return ResponseEntity.ok().build();
     }
 }

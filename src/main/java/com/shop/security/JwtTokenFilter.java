@@ -6,6 +6,7 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -13,6 +14,7 @@ import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
 
 import java.io.IOException;
+import java.util.List;
 
 /**
  * JWT 토큰 필터
@@ -23,11 +25,14 @@ import java.io.IOException;
 public class JwtTokenFilter extends OncePerRequestFilter {
     private final JwtTokenProvider jwtTokenProvider;
 
+    @Value("${security.ignored-urls}")
+    private List<String> ignoredUrls;
+
     @Override
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain) throws ServletException, IOException {
-        if ("/login".equals(request.getRequestURI()) || "/authenticate".equals(request.getRequestURI())
-        || "/fileDownload".equals(request.getRequestURI()) || "/auth".equals(request.getRequestURI())) {
-            // /login 경로는 jwtTokenFilter를 타지 않도록 설정
+        String requestURI = request.getRequestURI();
+        if (ignoredUrls.contains(requestURI)) {
+            // Ignored URLs bypass the filter
             filterChain.doFilter(request, response);
             return;
         }

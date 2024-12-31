@@ -22,6 +22,7 @@ import org.springframework.security.core.userdetails.User;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.client.RestTemplate;
@@ -29,6 +30,7 @@ import org.springframework.web.multipart.MultipartFile;
 
 import java.time.LocalDateTime;
 import java.util.Map;
+import java.util.Optional;
 
 @Service
 @RequiredArgsConstructor
@@ -39,6 +41,7 @@ public class MemberService {
     private String imageUploadPath;
     private final MemberRepository memberRepository;
     private final FileRepository fileRepository;
+    private final PasswordEncoder passwordEncoder;
 
     /**
      * id로 member 정보 조회
@@ -60,10 +63,10 @@ public class MemberService {
      * @return
      */
     public MemberDTO selectMemberByEmail(String email) {
-        Member member = memberRepository.findByEmail(email).get();
+        Optional<Member> memberOptional = memberRepository.findByEmail(email);
         MemberDTO memberDTO = null;
-        if(member != null){
-            memberDTO = ModelMapperUtil.map(member, MemberDTO.class);
+        if (memberOptional.isPresent()) {
+            memberDTO = ModelMapperUtil.map(memberOptional.get(), MemberDTO.class);
         }
         return memberDTO;
     }
@@ -117,9 +120,16 @@ public class MemberService {
         Member member = new Member();
         // 현재 날짜와 시간 취득
         LocalDateTime nowDate = LocalDateTime.now();
-        member.createMember(nowDate, Role.USER, memberDTO.getMemberId(), memberDTO.getName(), memberDTO.getPassword()
-                ,memberDTO.getName(),memberDTO.getEmail(), memberDTO.getZipCode()
-                , memberDTO.getAddress(), memberDTO.getDetailAddress(), memberDTO.getTelNo());
+        member.createMember(nowDate, Role.USER
+                , memberDTO.getMemberId()
+                , memberDTO.getName()
+                , passwordEncoder.encode(memberDTO.getPassword())
+                , memberDTO.getName()
+                , memberDTO.getEmail()
+                , memberDTO.getZipCode()
+                , memberDTO.getAddress()
+                , memberDTO.getDetailAddress()
+                , memberDTO.getTelNo());
         memberRepository.save(member);
     }
 }
